@@ -8,9 +8,9 @@
 
 * [network_benchmarking](./network_benchmarking): Network benchmarking algorithm
 * [plots](./plots): Draw figures about the evaluation results
-* [topology_data](./toplogy_data): Real-world AS topology
+* [topology_data](./topology_data): Real-world AS topology
 * [components](./components.py): Define network components such as ASes and speakers
-* [event_generator](./event_generator.py): Protocols that generate BGP announcements and routing requests
+* [event_generators](./event_generators.py): Protocols that generate BGP announcements and routing requests
 * [import_data](./import_data.py): Import real-world dataset and sample subgraphs from it
 * [packets](./packets.py): Define classical messages used for triggering events
 * [protocols](./protocols.py): Our QBGP Protocols
