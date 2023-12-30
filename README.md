@@ -1,5 +1,7 @@
 # A Quantum Network Simulator for Quantum Border Gateway Protocols with Online Top-$k$ Path Selection Algorithms
 
+[![DOI](https://zenodo.org/badge/601056849.svg)](https://zenodo.org/doi/10.5281/zenodo.10444190)
+
 This repository contains the source code associated with the INFOCOM'24 paper titled *Quantum BGP with Online Path Selection via Network Benchmarking*. It includes a quantum network simulator designed for experimenting with our proposed Quantum Border Gateway Protocols (BGP) equipped with online path selection algorithms. Running the code can fully reproduce all the figures and results in the paper.
 
 ## Prerequisites
