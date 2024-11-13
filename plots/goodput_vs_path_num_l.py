@@ -10,14 +10,14 @@ from cycler import cycler
 from event_generators import RequestGenerator
 from utils import set_random_seed
 
-plt.rc('font', family='Linux Libertine')  # Use the same font as the ACM template
-plt.rc('font', size=20)
-default_cycler = (cycler(color=['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#a65628']) +
-                  cycler(marker=['o', 'v', 's', 'x', '*', '+']) + cycler(linestyle=['-', '--', ':', '-.', '--', ':']))
-plt.rc('axes', prop_cycle=default_cycler)
-
-root_dir = os.path.dirname(os.path.abspath(__file__))  # The path of the current script
-output_dir = os.path.join(root_dir, "outputs")
+plt.rc("font", size=20)
+default_cycler = (
+    cycler(color=["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#a65628"])
+    + cycler(marker=["o", "v", "s", "x", "*", "+"])
+    + cycler(linestyle=["-", "--", ":", "-.", "--", ":"])
+)
+plt.rc("axes", prop_cycle=default_cycler)
+plt.rcParams["mathtext.fontset"] = "cm"
 
 
 def plot_goodput_vs_path_num_l(topo="random"):
@@ -27,12 +27,16 @@ def plot_goodput_vs_path_num_l(topo="random"):
     Line: Number of paths selected from the routing table
     """
 
+    plt.rc("font", family="Nimbus Roman")  # Use the same font as the IEEE template
+    root_dir = os.path.dirname(os.path.abspath(__file__))  # The path of the current script
+    output_dir = os.path.join(root_dir, "outputs")
+    figure_dir = os.path.join(output_dir, "figures")
     file_path = os.path.join(output_dir, f"plot_goodput_vs_path_num_l_{topo}_topo.pickle")
 
     if os.path.exists(file_path):
         print("Pickle data exists, skip simulation and plot the data directly.")
         print("To rerun the simulation, delete the pickle file in `plots/outputs` directory.")
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             results = pickle.load(f)
     else:
         # Run in parallel
@@ -50,25 +54,28 @@ def plot_goodput_vs_path_num_l(topo="random"):
         # Store the results in file
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             pickle.dump(results, f)
 
     # Plot
-    plt.rc('axes', prop_cycle=default_cycler)
+    plt.rc("axes", prop_cycle=default_cycler)
     fig, ax = plt.subplots()
     for l_num, (request_num, goodput) in results.items():
         if l_num == 0:
             label = "Without Benchmarking"
         else:
-            label = f"Benchmarking with L={l_num}"
-        ax.plot(request_num, goodput, linewidth=1.0, label=label)
-    ax.set_xlabel('Number of Requests (S-D Pairs)')
-    ax.set_ylabel('Goodput (ebits/s)')
+            label = f"Benchmarking with $L={l_num}$"
+        ax.plot(request_num, goodput, linewidth=2.0, label=label)
+    ax.set_xlabel("Number of Requests (S-D Pairs)")
+    ax.set_ylabel("Goodput (ebits/s)")
     ax.grid(True)
-    ax.legend(fontsize=14, title_fontsize=18)
+    ax.legend(fontsize=18, title_fontsize=18)
     plt.tight_layout()
-    plt.savefig(f"plot_goodput_vs_path_num_l_{topo}_topo.pdf")
-    # plt.show()
+    if not os.path.exists(figure_dir):
+        os.makedirs(figure_dir)
+    filename = os.path.join(figure_dir, f"plot_goodput_vs_path_num_l_{topo}_topo.pdf")
+    plt.savefig(filename)
+    os.system("pdfcrop" + " " + filename + " " + filename)
 
 
 def evaluate(l_num, topo):
@@ -96,15 +103,17 @@ def evaluate(l_num, topo):
     # Generate random AS-IP pairs, we will use these pairs to do benchmarking
     seed = 88
     set_random_seed(seed)
-    request_generator = RequestGenerator(network.as_dict,
-                                         network.ip_list,
-                                         "Poisson",
-                                         arrival_rate,
-                                         request_num,
-                                         with_benchmark=False,
-                                         random_pairs=[],
-                                         enable_load_balancing=False,
-                                         emit_request=False)
+    request_generator = RequestGenerator(
+        network.as_dict,
+        network.ip_list,
+        "Poisson",
+        arrival_rate,
+        request_num,
+        with_benchmark=False,
+        random_pairs=[],
+        enable_load_balancing=False,
+        emit_request=False,
+    )
     request_generator.start()
     ns.sim_run()
     as_ip_pairs = request_generator.get_random_pairs()
@@ -134,8 +143,9 @@ def evaluate(l_num, topo):
             if len(path_list) <= K:
                 continue
 
-            results = network.online_top_k_path_selection(selected_as, path_list, K, init_bounces, init_sample_times,
-                                                          loop_bounces, 3, delta, threshold1, threshold2)
+            results = network.online_top_k_path_selection(
+                selected_as, path_list, K, init_bounces, init_sample_times, loop_bounces, 3, delta, threshold1, threshold2
+            )
             print(results, file=sys.stderr)
             # Record results
             benchmarked_pair.append(as_ip_pair)
@@ -170,12 +180,9 @@ def evaluate(l_num, topo):
         # set_random_seed(seed)
         for i in range(repeat):
             network.reset()
-            goodput += network.simulate_traffic("Poisson",
-                                                arrival_rate,
-                                                index,
-                                                with_benchmark=True,
-                                                random_pairs=as_ip_pairs[0:index],
-                                                enable_load_balancing=False)[1]
+            goodput += network.simulate_traffic(
+                "Poisson", arrival_rate, index, with_benchmark=True, random_pairs=as_ip_pairs[0:index], enable_load_balancing=False
+            )[1]
         goodput /= repeat
         x.append(index)
         y.append(goodput)

@@ -49,9 +49,14 @@ class AnnouncementGenerator(Protocol):
 class RequestGenerator(Protocol):
     '''
     This models some speaker in an AS sending requests to access some IP.
-    AS is chosen randomly from `as_list`, the speaker is chosen randomly from this AS, and IP is chosen randomly from `ip_list`.
+    When `with_benchmarking = False`, AS is chosen randomly from `as_list`, the speaker is chosen randomly from this AS,
+    and IP is chosen randomly from `ip_list`. Otherwise, the AS and IP are chosen from the given `random_pairs` list.
     Requests will arrive according to `distribution_name` with parameter `arrival_rate`.
     At most `arrival_max` requests will be generated.
+
+    If `enable_load_balancing` is `n`, then the requests will be distributed among the top `n` different paths
+    whose first speaker is not full. Otherwise, if `enable_load_balancing` is `False`, then the requests will always be sent to the
+    first path in the routing table.
     '''
 
     def __init__(
@@ -84,8 +89,8 @@ class RequestGenerator(Protocol):
         # for request_id in range(self.arrival_max):
         count = 0
         while count < self.arrival_max:
-            # Randomly choose AS, speaker, and IP
             if not self.with_benchmark:
+                # Randomly choose AS, speaker, and IP
                 random_as = random.choice(self.as_list)
                 random_ip = random.choice(self.ip_list)
                 first_path = random_as.parent_network.get_paths(random_as, random_ip)[0]
@@ -97,6 +102,7 @@ class RequestGenerator(Protocol):
                 # random_speaker = list(random_as.speakers.values())[0]
                 packet = RoutingRequest(random_speaker, random_ip)
             else:
+                # If with benchmarking, choose AS, speaker, and IP from the given `random_pairs` list
                 random_as, random_ip = self.random_pairs[count]
                 next_as = random_as.parent_network.get_paths(random_as, random_ip)[0].as_list[0]
                 random_speaker = random_as.parent_network.get_speaker_to_as(random_as, next_as)
@@ -111,17 +117,31 @@ class RequestGenerator(Protocol):
                 RoutingRequest.request_id -= 1
                 continue
             else:
-                # If load balancing is enabled, distribute traffic using different paths
-                if self.enable_load_balancing:
-                    paths = random_speaker.routing_table.get_route(random_ip)
+                # If load balancing is enabled, randomly distribute traffic using different paths whose first speaker is not full
+                if self.enable_load_balancing is not False:
+                    # The number of paths to share the traffic
+                    num_paths = int(self.enable_load_balancing)
+
+                    paths = random_as.parent_network.get_paths(random_as, random_ip)
+
+                    paths_with_qmem = []
                     for path in paths:
-                        next_asn = path[0]
-                        next_speaker = random_speaker.find_next_speaker_via_asn(next_asn)
-                        if next_speaker.qmem_available():
-                            # Use path that the first speaker has quantum memory available
-                            as_path = [random_as.parent_network.as_dict[asn] for asn in path]
-                            packet.path = RoutingPath(as_path)
-                            break
+                        next_as = path.as_list[0]
+                        speaker = random_as.parent_network.get_speaker_to_as(random_as, next_as)
+                        if speaker.qmem_available():
+                            paths_with_qmem.append(path)
+
+                    paths_with_qmem = paths_with_qmem[:num_paths]
+
+                    # paths = random_speaker.routing_table.get_route(random_ip)
+                    # Find `num_paths` paths whose first speaker has quantum memory available
+
+                    # paths_with_qmem = [p for p in paths if random_speaker.find_next_speaker_via_asn(p.as_list[0]).qmem_available()][:num_paths]
+                    # Randomly choose a path to share the traffic
+                    if len(paths_with_qmem) > 0:
+                        selected_path = random.choice(paths_with_qmem)
+                        as_path = [as_node for as_node in selected_path.as_list]
+                        packet.path = RoutingPath(as_path)
 
                 # Record the request ID in the sender speaker
                 # This is used for the sender speaker's consumer protocol to consume the entanglement after it gets "EPR_READY" signal

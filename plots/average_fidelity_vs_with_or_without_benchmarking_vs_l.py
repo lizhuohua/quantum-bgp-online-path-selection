@@ -8,11 +8,13 @@ from components import QuantumNetwork
 from cycler import cycler
 from utils import set_random_seed
 
-plt.rc('font', family='Linux Libertine')  # Use the same font as the ACM template
-plt.rc('font', size=20)
-default_cycler = (cycler(color=['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#a65628']) +
-                  cycler(marker=['o', 'v', 's', 'x', '*', '+']) + cycler(linestyle=['-', '--', ':', '-.', '--', ':']))
-plt.rc('axes', prop_cycle=default_cycler)
+plt.rc("font", size=20)
+default_cycler = (
+    cycler(color=["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#a65628"])
+    + cycler(marker=["o", "v", "s", "x", "*", "+"])
+    + cycler(linestyle=["-", "--", ":", "-.", "--", ":"])
+)
+plt.rc("axes", prop_cycle=default_cycler)
 
 
 def plot_average_fidelity_vs_with_or_without_benchmarking_vs_l(topo="random"):
@@ -22,15 +24,16 @@ def plot_average_fidelity_vs_with_or_without_benchmarking_vs_l(topo="random"):
     Line: Different noise
     """
 
+    plt.rc("font", family="Nimbus Roman")  # Use the same font as the IEEE template
     root_dir = os.path.dirname(os.path.abspath(__file__))  # The path of the current script
     output_dir = os.path.join(root_dir, "outputs")
-    file_path = os.path.join(output_dir,
-                             f"plot_average_fidelity_vs_with_or_without_benchmarking_vs_l_{topo}_topo.pickle")
+    figure_dir = os.path.join(output_dir, "figures")
+    file_path = os.path.join(output_dir, f"plot_average_fidelity_vs_with_or_without_benchmarking_vs_l_{topo}_topo.pickle")
 
     if os.path.exists(file_path):
         print("Pickle data exists, skip simulation and plot the data directly.")
         print("To rerun the simulation, delete the pickle file in `plots/outputs` directory.")
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             results = pickle.load(f)
     else:
         # Run in parallel
@@ -47,21 +50,25 @@ def plot_average_fidelity_vs_with_or_without_benchmarking_vs_l(topo="random"):
         # Store the results in file
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             pickle.dump(results, f)
 
     # Plot
-    plt.rc('axes', prop_cycle=default_cycler)
+    plt.rc("axes", prop_cycle=default_cycler)
     fig, ax = plt.subplots()
-    for noise, (L_list, result) in results.items():
-        ax.plot(L_list, result, linewidth=1.0, label=str(noise))
-    ax.set_xlabel('Number of Paths in Routing Table')
-    ax.set_ylabel('Average Fidelity Improvement (%)')
+    ax.set_xlabel("Number of Paths in Routing Table")
+    ax.set_ylabel("Average Fidelity Improvement (%)")
     ax.grid(True)
+    for noise, (L_list, result) in results.items():
+        ax.plot(L_list, result, linewidth=2, label=str(noise))
     ax.legend(title="Noise", fontsize=14, title_fontsize=18)
     plt.tight_layout()
-    plt.savefig(f"plot_average_fidelity_vs_with_or_without_benchmarking_vs_l_{topo}_topo.pdf")
-    # plt.show()
+    if not os.path.exists(figure_dir):
+        os.makedirs(figure_dir)
+    filename = os.path.join(figure_dir, f"plot_average_fidelity_vs_with_or_without_benchmarking_vs_l_{topo}_topo.pdf")
+    plt.savefig(filename)
+    os.system("pdfcrop" + " " + filename + " " + filename)
+    plt.clf()
 
 
 def evaluate(noise, topo):
@@ -89,11 +96,9 @@ def evaluate(noise, topo):
     seed = 87
     set_random_seed(seed)
     network.reset()
-    throughput, goodput, _, as_ip_pairs = network.simulate_traffic("Poisson",
-                                                                   arrival_rate,
-                                                                   request_num,
-                                                                   with_benchmark=False,
-                                                                   enable_load_balancing=False)
+    throughput, goodput, _, as_ip_pairs = network.simulate_traffic(
+        "Poisson", arrival_rate, request_num, with_benchmark=False, enable_load_balancing=False
+    )
     avg_fidelity_before = goodput / throughput
 
     fidelity_improvements = []
@@ -121,8 +126,9 @@ def evaluate(noise, topo):
             if len(path_list) <= K:
                 continue
 
-            results = network.online_top_k_path_selection(selected_as, path_list, K, init_bounces, init_sample_times,
-                                                          loop_bounces, 5, delta, threshold1, threshold2)
+            results = network.online_top_k_path_selection(
+                selected_as, path_list, K, init_bounces, init_sample_times, loop_bounces, 5, delta, threshold1, threshold2
+            )
             print(results)
             # Record results
             benchmarked_pair.append(as_ip_pair)
@@ -145,12 +151,9 @@ def evaluate(noise, topo):
 
         # Rerun simulation and compare performance
         network.reset()
-        throughput, goodput, _, _ = network.simulate_traffic("Poisson",
-                                                             arrival_rate,
-                                                             request_num,
-                                                             with_benchmark=True,
-                                                             random_pairs=as_ip_pairs,
-                                                             enable_load_balancing=False)
+        throughput, goodput, _, _ = network.simulate_traffic(
+            "Poisson", arrival_rate, request_num, with_benchmark=True, random_pairs=as_ip_pairs, enable_load_balancing=False
+        )
         average_fidelity_after = goodput / throughput
         print(f"L={l_num}, average fidelity before benchmark: {avg_fidelity_before}", file=sys.stderr)
         print(f"L={l_num}, average fidelity after benchmark: {average_fidelity_after}", file=sys.stderr)

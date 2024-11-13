@@ -15,6 +15,7 @@ from .goodput_vs_measure_noise_vs_capacity import \
     plot_goodput_vs_measure_noise_vs_capacity  # noqa: F401
 from .goodput_vs_path_num_l import plot_goodput_vs_path_num_l  # noqa: F401
 from .goodput_vs_ratio import plot_goodput_vs_ratio  # noqa: F401
+from .goodput_vs_load_balancing import plot_goodput_vs_load_balancing  # noqa: F401
 from .latency_vs_length_vs_as_num import \
     plot_lantency_vs_length_vs_as_num  # noqa: F401
 from .plot_bounces_vs_path_num_k import \

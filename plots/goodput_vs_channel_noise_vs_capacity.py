@@ -7,11 +7,13 @@ from components import QuantumNetwork
 from cycler import cycler
 from utils import set_random_seed
 
-plt.rc('font', family='Linux Libertine')  # Use the same font as the ACM template
-plt.rc('font', size=20)
-default_cycler = (cycler(color=['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#a65628']) +
-                  cycler(marker=['o', 'v', 's', 'x', '*', '+']) + cycler(linestyle=['-', '--', ':', '-.', '--', ':']))
-plt.rc('axes', prop_cycle=default_cycler)
+plt.rc("font", size=20)
+default_cycler = (
+    cycler(color=["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#a65628"])
+    + cycler(marker=["o", "v", "s", "x", "*", "+"])
+    + cycler(linestyle=["-", "--", ":", "-.", "--", ":"])
+)
+plt.rc("axes", prop_cycle=default_cycler)
 
 
 def plot_goodput_vs_channel_noise_vs_capacity():
@@ -21,14 +23,16 @@ def plot_goodput_vs_channel_noise_vs_capacity():
     Line: the capacity of speakers
     """
 
+    plt.rc("font", family="Nimbus Roman")  # Use the same font as the IEEE template
     root_dir = os.path.dirname(os.path.abspath(__file__))  # The path of the current script
     output_dir = os.path.join(root_dir, "outputs")
+    figure_dir = os.path.join(output_dir, "figures")
     file_path = os.path.join(output_dir, "plot_goodput_vs_channel_noise_vs_capacity.pickle")
 
     if os.path.exists(file_path):
         print("Pickle data exists, skip simulation and plot the data directly.")
         print("To rerun the simulation, delete the pickle file in `plots/outputs` directory.")
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             results = pickle.load(f)
     else:
         # Run in parallel
@@ -36,7 +40,7 @@ def plot_goodput_vs_channel_noise_vs_capacity():
         capacity_list = [2, 4, 6, 8, 10]
         results = []
         for capacity in capacity_list:
-            results.append(p.apply_async(evaluate, args=(capacity, )))
+            results.append(p.apply_async(evaluate, args=(capacity,)))
         p.close()
         p.join()
         results = {capacity_list[i]: r.get() for i, r in enumerate(results)}
@@ -44,21 +48,24 @@ def plot_goodput_vs_channel_noise_vs_capacity():
         # Store the results in file
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             pickle.dump(results, f)
 
     # Plot
-    plt.rc('axes', prop_cycle=default_cycler)
+    plt.rc("axes", prop_cycle=default_cycler)
     fig, ax = plt.subplots()
-    ax.set_xlabel('Average Channel Noise Rate')
-    ax.set_ylabel('Goodput (ebits/s)')
+    ax.set_xlabel("Average Channel Noise Rate")
+    ax.set_ylabel("Goodput (ebits/s)")
     ax.grid(True)
     for label, (x, y) in results.items():
-        ax.plot(x, y, linewidth=1.0, label=str(label))
-    ax.legend(title="Capacity", fontsize=14, title_fontsize=18)
+        ax.plot(x, y, linewidth=2.0, label=str(label))
+    ax.legend(title="Capacity", fontsize=18, title_fontsize=18)
     plt.tight_layout()
-    plt.savefig("plot_goodput_vs_channel_noise_vs_capacity.pdf")
-    # plt.show()
+    if not os.path.exists(figure_dir):
+        os.makedirs(figure_dir)
+    filename = os.path.join(figure_dir, "plot_goodput_vs_channel_noise_vs_capacity.pdf")
+    plt.savefig(filename)
+    os.system("pdfcrop" + " " + filename + " " + filename)
 
 
 def evaluate(capacity):

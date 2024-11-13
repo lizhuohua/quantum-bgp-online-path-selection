@@ -385,6 +385,8 @@ class QuantumNetwork(Protocol):
             sort_list = sorted(arm_ucb_dict.items(), key=lambda x: x[1], reverse=True)
             top_k_arms = [x[0] for x in sort_list][0:K - len(good_arm_set)]
             left_arms = [x[0] for x in sort_list][K - len(good_arm_set):]
+            if len(left_arms) == 0:
+                break
 
             temp_lcb_values = [arm_lcb_dict[key] for key in top_k_arms]
             min_lcb = min(temp_lcb_values)

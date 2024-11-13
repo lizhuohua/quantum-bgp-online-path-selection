@@ -7,11 +7,14 @@ from components import QuantumNetwork
 from cycler import cycler
 from utils import set_random_seed
 
-plt.rc('font', family='Linux Libertine')  # Use the same font as the ACM template
-plt.rc('font', size=19)
-default_cycler = (cycler(color=['r', 'g', 'b', 'y', 'm', 'c']) + cycler(marker=['o', 'v', 's', 'x', '*', '+']) +
-                  cycler(linestyle=['-', '--', ':', '-.', '--', ':']))
-plt.rc('axes', prop_cycle=default_cycler)
+plt.rc("font", family="Linux Libertine")  # Use the same font as the ACM template
+plt.rc("font", size=19)
+default_cycler = (
+    cycler(color=["r", "g", "b", "y", "m", "c"])
+    + cycler(marker=["o", "v", "s", "x", "*", "+"])
+    + cycler(linestyle=["-", "--", ":", "-.", "--", ":"])
+)
+plt.rc("axes", prop_cycle=default_cycler)
 
 
 def plot_throughput_vs_request_num_vs_path_num():
@@ -27,7 +30,7 @@ def plot_throughput_vs_request_num_vs_path_num():
     if os.path.exists(file_path):
         print("Pickle data exists, skip simulation and plot the data directly.")
         print("To rerun the simulation, delete the pickle file in `plots/outputs` directory.")
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             results = pickle.load(f)
     else:
         # Run in parallel
@@ -37,7 +40,7 @@ def plot_throughput_vs_request_num_vs_path_num():
         path_num_list = [1, 2, 3, 4, 5]
         results = []
         for path_num in path_num_list:
-            results.append(p.apply_async(evaluate, args=(path_num, )))
+            results.append(p.apply_async(evaluate, args=(path_num,)))
         p.close()
         p.join()
         results = {path_num_list[i]: r.get() for i, r in enumerate(results)}
@@ -45,16 +48,16 @@ def plot_throughput_vs_request_num_vs_path_num():
         # Store the results in file
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             pickle.dump(results, f)
 
     # Plot
     fig, ax = plt.subplots()
-    ax.set_xlabel('Number of Requests (S-D Pairs)')
-    ax.set_ylabel('Throughput (ebits/s)')
+    ax.set_xlabel("Number of Requests (S-D Pairs)")
+    ax.set_ylabel("Throughput (ebits/s)")
     ax.grid(True)
     for label, (x, y) in results.items():
-        ax.plot(x, y, linewidth=1.0, label=str(label))
+        ax.plot(x, y, linewidth=2.0, label=str(label))
     ax.legend(title="# of Paths", fontsize=14, title_fontsize=18)
     plt.tight_layout()
     plt.savefig("plot_throughput_vs_request_num_vs_path_num.pdf")

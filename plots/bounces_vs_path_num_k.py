@@ -60,16 +60,16 @@ def bounces_vs_path_num_k(num, topo):
         print(f"{l} is finished for online evaluate without information gain", file=sys.stderr)
         results[l] = {
             "total_bounces": [total_bounces_by_nb, temp1["total_bounces"], temp2["total_bounces"]],
-            "fidelity": [fidelity_by_nb, temp1["fidelity"], temp2["fidelity"]]
+            "fidelity": [fidelity_by_nb, temp1["fidelity"], temp2["fidelity"]],
         }
 
         if not os.path.exists(file_path):
-            with open(file_path, 'wb') as f:
+            with open(file_path, "wb") as f:
                 pickle.dump(results, f)
         else:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 previous = pickle.load(f)
-            with open(file_path, 'wb') as f:
+            with open(file_path, "wb") as f:
                 previous[l] = results[l]
                 pickle.dump(previous, f)
 
@@ -168,8 +168,9 @@ def online_evaluate(k_num, topo):
     threshold1 = 0.80
     threshold2 = 0.75
     budget = 5000
-    results = network.online_top_k_path_selection(selected_as, path_list, k_num, init_bounces, init_sample_times,
-                                                  loop_bounces, budget, delta, threshold1, threshold2)
+    results = network.online_top_k_path_selection(
+        selected_as, path_list, k_num, init_bounces, init_sample_times, loop_bounces, budget, delta, threshold1, threshold2
+    )
     # print(fidelity2)
 
     return results
@@ -221,9 +222,9 @@ def online_evaluate_without_information_gain(k_num, topo):
     threshold1 = 0.80
     threshold2 = 0.75
     budget = 5000
-    results = network.online_top_k_path_selection_without_information_gain(selected_as, path_list, k_num, init_bounces,
-                                                                           init_sample_times, loop_bounces, budget,
-                                                                           delta, threshold1, threshold2)
+    results = network.online_top_k_path_selection_without_information_gain(
+        selected_as, path_list, k_num, init_bounces, init_sample_times, loop_bounces, budget, delta, threshold1, threshold2
+    )
     # print(results)
 
     return results
