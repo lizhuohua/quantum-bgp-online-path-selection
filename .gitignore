@@ -16,7 +16,7 @@
 auto/
 paper/*.pdf
 simulation/*.pdf
-simulation/plots/outputs
+plots/outputs
 __pycache__/
 .vscode/
 .DS_Store

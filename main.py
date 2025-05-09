@@ -31,6 +31,9 @@ if __name__ == "__main__":
     plots.plot_throughput_vs_request_num_vs_as_num()
     plots.plot_throughput_vs_request_num_vs_capacity()
 
+    plots.plot_convergence_time_vs_neighbor_num_vs_as_num()
+    plots.plot_convergence_time_vs_path_num_vs_as_num()
+
     # Some other potential plots
     # plots.plot_throughput_vs_request_num_vs_path_num()
     # plots.plot_lantency_vs_length_vs_as_num()
